@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	applicationComplete="application1_applicationCompleteHandler(event)"
+	width="100%" height="100%" frameRate="40"
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark"
+	xmlns:visualscripts="com.blogpspot.visualscripts.*" 
+	viewSourceURL="srcview/index.html" 
+	xmlns:video="com.kaltura.video.*">
+		
+		<fx:Script>
+			<![CDATA[
+				import com.kaltura.video.vo.SliceVO;
+				import com.zoharbabin.bytearray.flv.FlvWizard;
+				
+				import flash.utils.setTimeout;
+				
+				import mx.events.DragEvent;
+				import mx.events.FlexEvent;
+				import mx.events.PropertyChangeEvent;
+				import mx.managers.DragManager;
+				
+				private var nc:NetConnection;
+				private var ns:NetStream;
+				private var ldr:URLLoader;
+				private var inputVideo:ByteArray = null;
+				private var mergedBytes:ByteArray;
+				private var flvwiz:FlvWizard = new FlvWizard();
+
+				protected function application1_applicationCompleteHandler(event:FlexEvent):void
+				{
+					downloadVideoFLVs ();
+				}
+				
+				private function downloadVideoFLVs ():void {
+					ldr = new URLLoader();
+					ldr.addEventListener(Event.COMPLETE, downloaded);
+					ldr.dataFormat = URLLoaderDataFormat.BINARY;
+					ldr.load(new URLRequest('boy.flv'));
+				}
+				private function downloaded(event:Event):void {
+					inputVideo = ldr.data;
+					intervalSlider.minimum = 0;
+					intervalSlider.maximum = flvwiz.findDuration(inputVideo);
+					controlsUI.enabled = true;
+					preparePlayback ();
+				}
+				private function preparePlayback ():void {
+					nc = new NetConnection();
+					nc.connect(null);
+					ns = new NetStream(nc);
+					ns.play(null);
+					ns.client = new Object();
+					ns.client.onMetaData = function (...args):void {};
+					videoScreen.video.attachNetStream(ns);
+				}
+
+				protected function chopVideo(action:String = 'add'):void
+				{
+					if (action == 'add') {
+						var vo:SliceVO = new SliceVO (intervalSlider.pendingT1Val, intervalSlider.pendingT2Val);
+						listData.addItem(vo);
+					}
+				}
+				
+				private function playback ():void {
+					var slice:ByteArray;
+					var streams:Vector.<ByteArray> = new Vector.<ByteArray>();
+					var tempVO:SliceVO;
+					trace ('--');
+					for (var i:int = 0; i < listData.length; ++i) {
+						tempVO = listData.getItemAt(i) as SliceVO;
+						slice = flvwiz.slice(inputVideo, tempVO.in_point, tempVO.out_point);
+						streams[i] = slice;
+						trace (tempVO.toString());
+					}
+					mergedBytes = flvwiz.concatStreams(streams);
+					ns.play(null);
+					ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
+					ns.soundTransform = new SoundTransform(1);
+					ns.appendBytes(mergedBytes);
+				}
+
+				protected function list_dragCompleteHandler(event:DragEvent):void
+				{
+					switch (event.action) {
+						case DragManager.NONE:
+							return;
+							break;
+						
+						case DragManager.MOVE:
+							chopVideo('move');
+							break;
+					}
+				}
+
+				protected function image1_dragEnterHandler(event:DragEvent):void
+				{
+					DragManager.acceptDragDrop(trashcan);
+				}
+
+
+				protected function intervalSlider_propertyChangeHandler(event:PropertyChangeEvent):void
+				{
+					if (ns == null) return;
+					ns.play(null);
+					ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
+					var seekTime:uint = intervalSlider[event.property];
+					var endTime:uint = seekTime + 100;
+					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, seekTime, endTime);
+					ns.soundTransform = new SoundTransform(0);
+					ns.appendBytes(seekPosBytes);
+				}
+
+			]]>
+		</fx:Script>
+		
+	<s:VGroup id="controlsUI" enabled="false" paddingLeft="20">
+		<s:HGroup verticalAlign="bottom" gap="70" horizontalAlign="left">
+			<video:VideoScreenControl id="videoScreen" width="400" height="300" />
+			<s:Image id="trashcan"
+				dragEnter="image1_dragEnterHandler(event)"
+				source="@Embed(source='empty-trash.png')" />
+		</s:HGroup>
+		<s:List id="list" width="600" height="100"
+				dragEnabled="true"
+				dropEnabled="true"
+				dragMoveEnabled="true"
+				dragComplete="list_dragCompleteHandler(event)"
+				horizontalCenter="0" verticalCenter="0">
+			<s:layout>
+				<s:HorizontalLayout gap="6" horizontalAlign="left" />
+			</s:layout>
+			<s:dataProvider>
+				<s:ArrayList id="listData">
+				</s:ArrayList>
+			</s:dataProvider>
+		</s:List>
+		<s:Button id="chopBtn" width="600" label="Chop!" click="chopVideo()"/>
+		<s:Button id="playBtn" width="600" label="Play!" click="playback()"/>
+		<visualscripts:IntervalSlider id="intervalSlider" 
+			   width="600" height="20" y="50"
+			   snapInterval="1"
+			   minimum="1"
+			   maximum="100"
+			   thumb1Value="0"
+			   thumb2Value="1"
+			   middleIsFixedLength="true"
+			   propertyChange="intervalSlider_propertyChangeHandler(event)"
+			   liveDragging="true"/>
+	</s:VGroup>
+</s:Application>
