@@ -107,7 +107,7 @@
 					ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
 					var seekTime:uint = intervalSlider[event.property];
 					var endTime:uint = seekTime + 100;
-					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, seekTime, endTime);
+					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, seekTime, endTime, false);
 					ns.soundTransform = new SoundTransform(0);
 					ns.appendBytes(seekPosBytes);
 				}
