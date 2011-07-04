@@ -71,12 +71,10 @@
 					var slice:ByteArray;
 					var streams:Vector.<ByteArray> = new Vector.<ByteArray>();
 					var tempVO:SliceVO;
-					trace ('--');
 					for (var i:int = 0; i < listData.length; ++i) {
 						tempVO = listData.getItemAt(i) as SliceVO;
 						slice = flvwiz.slice(inputVideo, tempVO.in_point, tempVO.out_point);
 						streams[i] = slice;
-						trace (tempVO.toString());
 					}
 					mergedBytes = flvwiz.concatStreams(streams);
 					ns.play(null);
@@ -114,6 +112,21 @@
 					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, seekTime, endTime, false);
 					ns.soundTransform = new SoundTransform(0);
 					ns.appendBytes(seekPosBytes);
+				}
+				
+				private function saveFile (event:MouseEvent):void {
+					if (!mergedBytes && (listData.length < 1)) return;
+					var slice:ByteArray;
+					var streams:Vector.<ByteArray> = new Vector.<ByteArray>();
+					var tempVO:SliceVO;
+					for (var i:int = 0; i < listData.length; ++i) {
+						tempVO = listData.getItemAt(i) as SliceVO;
+						slice = flvwiz.slice(inputVideo, tempVO.in_point, tempVO.out_point);
+						streams[i] = slice;
+					}
+					mergedBytes = flvwiz.concatStreams(streams);
+					var fR:FileReference = new FileReference();
+					fR.save(mergedBytes, "mergedVideo.flv");
 				}
 
 			]]>
