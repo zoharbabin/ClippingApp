@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:Application 
 	applicationComplete="application1_applicationCompleteHandler(event)"
-	width="100%" height="100%" frameRate="40"
+	width="620" height="550" frameRate="40"
 	xmlns:fx="http://ns.adobe.com/mxml/2009" 
 	xmlns:s="library://ns.adobe.com/flex/spark"
 	xmlns:visualscripts="com.blogpspot.visualscripts.*" 
@@ -53,6 +53,10 @@
 					ns.client = new Object();
 					ns.client.onMetaData = function (...args):void {};
 					videoScreen.video.attachNetStream(ns);
+					ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
+					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, 0, 1, true);
+					ns.soundTransform = new SoundTransform(0);
+					ns.appendBytes(seekPosBytes);
 				}
 
 				protected function chopVideo(action:String = 'add'):void
@@ -115,7 +119,7 @@
 			]]>
 		</fx:Script>
 		
-	<s:VGroup id="controlsUI" enabled="false" paddingLeft="20">
+	<s:VGroup id="controlsUI" enabled="false" >
 		<s:HGroup verticalAlign="bottom" gap="70" horizontalAlign="left">
 			<video:VideoScreenControl id="videoScreen" width="400" height="300" />
 			<s:Image id="trashcan"
