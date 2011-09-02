@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/mx">
+	<!-- host component -->
+	<fx:Metadata>
+		[HostComponent("com.blogpspot.visualscripts.IntervalSlider")]
+	</fx:Metadata>
+	
+	<!-- background -->
+	<s:BitmapImage source="@Embed('/assets/intervalslider/timelinebase.png')" smooth="true" 
+				   height="16" width="277" />
+	
+	<s:Group x="{thumb1.x+7}" width="{thumb2.x-thumb1.x+thumb2.width-14}" y="4"
+			 height="10" id="middleTrack">
+		<s:Rect width="100%" height="100%">
+			<s:fill>
+				<s:BitmapFill source="@Embed('/assets/intervalslider/middletrack.png')" fillMode="repeat" />
+			</s:fill>
+		</s:Rect>
+	</s:Group>
+	
+	<s:Image id="thumb1" width="13" height="14" y="2"
+			 source="@Embed('/assets/intervalslider/intervalslider_thumb.png')" smooth="true" />
+	<s:Image id="thumb2" width="13" height="14" y="2"
+			 source="@Embed('/assets/intervalslider/intervalslider_thumb.png')" smooth="true" />
+
+	<!-- SkinParts
+	name=thumb2, type=mx.core.UIComponent, required=true
+	name=thumb1, type=mx.core.UIComponent, required=true
+	name=middleTrack, type=mx.core.UIComponent, required=false
+	-->
+</s:Skin>

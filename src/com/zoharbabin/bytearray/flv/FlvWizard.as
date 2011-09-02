@@ -341,8 +341,8 @@ package com.zoharbabin.bytearray.flv
 		/**
 		 * Slices (Clip) a given FLV bytearray according to given in and out points (millis).
 		 * @param videoInput	the FLV bytearray to slice.
-		 * @param start			in point in millisec.
-		 * @param end			out point in millisec.
+		 * @param in_point			in point in millisec.
+		 * @param out_point			out point in millisec.
 		 * @param pin2keyframe	if true will slice the video in the nearest keyframe rather than frame, true will usually produce better video results.
 		 * @return	A newly clipped FLV of the given FLV according to the in and out points.
 		 */             
@@ -381,8 +381,15 @@ package com.zoharbabin.bytearray.flv
 			// run for all the tags in the inputs, syncing to the desired channel (video/audio input)
 			var foundStart:Boolean = false;
 			var startTime:uint = 0;
-			while ( (videoInput.bytesAvailable > 0) && ((out_point < 0) || (time <= out_point)) )
+			while (videoInput.bytesAvailable > 0)
 			{
+				if ((out_point > 0) && (time >= out_point)) {
+					if (!pin2keyframe) {
+						break;
+					} else if ((pin2keyframe && (keyframe == 1))) { 
+						break;
+					}	
+				}
 				// read tag N from input
 				offset = videoInput.position; 
 				currentTag = videoInput.readByte();
@@ -429,8 +436,86 @@ package com.zoharbabin.bytearray.flv
 			}
 			// update the duration variable in the FLV metadata
 			_sliced.position = durationVarPos;
-			_sliced.writeBytes(writeNumberVariable(FlvWizard.DURATION, (timestampExtended << 8 | time)/1000));
+			var totalTime:uint = 0;
+			if(in_point < 0) in_point = 0;
+			if(in_point > time) in_point = time;
+			if((out_point < 0) || (out_point > time)) out_point = time;
+			totalTime = out_point - in_point;
+			_sliced.writeBytes(writeNumberVariable(FlvWizard.DURATION, (timestampExtended << 8 | totalTime)/1000));
 			return _sliced;
+		}
+		
+		/**
+		 * Given an FLV and in time (millis) returns the time (millis) of the next keyframe.
+		 * @param videoInput	the FLV bytearray to slice.
+		 * @param in_point			in point in millisec.
+		 * @return	A newly clipped FLV of the given FLV according to the in and out points.
+		 */             
+		public function getNextKeyframeTime (videoInput:ByteArray, in_point:int, backward:Boolean = false):uint
+		{
+			videoInput = clone(videoInput);
+			var offset:int; 
+			var end:int;
+			var tagLength:int;
+			var currentTag:int;
+			var step:int;
+			var bodyTagHeader:int;
+			var streamID:int;
+			var time:int = 0;
+			var timestampExtended:int;
+			var keyframe:int;
+			var soundFormat:int;
+			var soundRate:int;
+			var soundSize:int;
+			var soundType:int;
+			var codecID:int;
+			var lastkf:uint = 0;
+			// skip the headers of the inputs
+			videoInput.position = findTagsStart(videoInput);
+			// run for all the tags in the inputs, syncing to the desired channel (video/audio input)
+			var foundStart:Boolean = false;
+			var startTime:uint = 0;
+			while (videoInput.bytesAvailable > 0)
+			{
+				// read tag N from input
+				offset = videoInput.position; 
+				currentTag = videoInput.readByte();
+				step = (videoInput.readUnsignedShort() << 8) | videoInput.readUnsignedByte();
+				time = (videoInput.readUnsignedShort() << 8) | videoInput.readUnsignedByte();
+				timestampExtended = videoInput.readUnsignedByte();
+				streamID = ((videoInput.readUnsignedShort() << 8) | videoInput.readUnsignedByte());
+				bodyTagHeader = videoInput.readByte();
+				end = videoInput.position + step + 3;
+				tagLength = end - offset;
+				
+				if ( currentTag == FlvWizard.AUDIO_TAG ) 
+				{
+					soundFormat = (bodyTagHeader & 0xF0) >> 4;
+					soundRate = (bodyTagHeader & 0xC) >> 2;
+					soundSize = (bodyTagHeader & 0x2) >> 1;
+					soundType = (bodyTagHeader & 0x1);
+					
+				} else if ( currentTag == FlvWizard.VIDEO_TAG ) {
+					keyframe = (bodyTagHeader & 0xF0) >> 4;
+					codecID = (bodyTagHeader & 0xF0) >> 4;
+				}
+				
+				if (keyframe == 1) {
+					lastkf = startTime;
+					startTime = time;
+				}
+				if (time >= in_point && !foundStart) {
+					foundStart = true;
+					break;
+				}
+				
+				videoInput.position = end;
+			}
+			if (backward)
+				return lastkf;
+			else
+				return startTime;
+				
 		}
 		
 		/**
@@ -527,7 +612,7 @@ package com.zoharbabin.bytearray.flv
 			}
 			// update the duration variable in the FLV metadata
 			_merged.position = durationVarPos;
-			_merged.writeBytes(writeNumberVariable(FlvWizard.DURATION, (timestampExtended << 8 | time)/1000));
+			_merged.writeBytes(writeNumberVariable(FlvWizard.DURATION, (timestampExtended << 8 | totalTime)/1000));
 			return _merged;
 		}
 		

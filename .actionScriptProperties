@@ -12,9 +12,9 @@
     </libraryPath>
     <sourceAttachmentPath/>
   </compiler>
-  <theme themeIsDefault="false" themeIsSDK="true" themeLocation="${SDK_THEMES_DIR}/frameworks/themes/Halo"/>
   <applications>
     <application path="ClippingApp.mxml"/>
+    <application path="YTtest.mxml"/>
   </applications>
   <modules/>
   <buildCSSFiles/>

@@ -7,7 +7,7 @@ package com.kaltura.video
 	
 	public class VideoScreenControl extends UIComponent
 	{
-		public var video:Video = new Video (400, 300);
+		public var video:Video = new Video (334, 253);
 		
 		public function VideoScreenControl()
 		{

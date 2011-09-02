@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:Application 
+<s:Application backgroundColor="#000000" 
+	skinClass="skins.app.ClippinAppSkin"
 	applicationComplete="application1_applicationCompleteHandler(event)"
-	width="620" height="550" frameRate="40"
+	width="353" height="412" frameRate="40"
 	xmlns:fx="http://ns.adobe.com/mxml/2009" 
 	xmlns:s="library://ns.adobe.com/flex/spark"
 	xmlns:visualscripts="com.blogpspot.visualscripts.*" 
-	viewSourceURL="srcview/index.html" 
 	xmlns:video="com.kaltura.video.*">
 		
 		<fx:Script>
@@ -15,10 +15,20 @@
 				
 				import flash.utils.setTimeout;
 				
+				import mx.collections.IList;
+				import mx.controls.Alert;
+				import mx.core.FlexGlobals;
+				import mx.events.CollectionEvent;
 				import mx.events.DragEvent;
 				import mx.events.FlexEvent;
 				import mx.events.PropertyChangeEvent;
 				import mx.managers.DragManager;
+				
+				import skins.buttons.ChopBtnSkin;
+				import skins.buttons.PlayBtnSkin;
+				import skins.list.ListSkin;
+				
+				import spark.layouts.supportClasses.DropLocation;
 				
 				private var nc:NetConnection;
 				private var ns:NetStream;
@@ -26,22 +36,91 @@
 				private var inputVideo:ByteArray = null;
 				private var mergedBytes:ByteArray;
 				private var flvwiz:FlvWizard = new FlvWizard();
-
-				protected function application1_applicationCompleteHandler(event:FlexEvent):void
-				{
-					downloadVideoFLVs ();
+				private var inpointBD:BitmapData = new BitmapData (400, 300, false, 0xcafcaf);
+				private var outpointBD:BitmapData = new BitmapData (400, 300, false, 0xcafcaf);
+				private var lastChangedThumb:String = '';
+				private var lastChangedThumbDirection:int = 0; //0=right, 1=left
+				private var filePathToEdit:String = 'demo.flv';
+				private var totalMergedDurationMS:Number = 0; 
+				private var tt:Timer = new Timer (100);
+				
+				private var fileRef:FileReference = new FileReference();
+				
+				/* private function onButtonClick(e:MouseEvent):void {
+					fileRef.browse([new FileFilter("Video", "*.flv")]);
+					fileRef.addEventListener(Event.SELECT, onFileSelected);
 				}
 				
-				private function downloadVideoFLVs ():void {
+				private function onFileSelected(e:Event):void {
+					fileRef.addEventListener(Event.COMPLETE, onFileLoaded);
+					fileRef.load();
+				}
+				
+				private function onFileLoaded(e:Event):void {
+					inputVideo = new ByteArray();
+					inputVideo.writeBytes(e.target.data);
+					intervalSlider.minimum = 0;
+					intervalSlider.maximum = flvwiz.findDuration(inputVideo);
+					var t:uint = flvwiz.getNextKeyframeTime(inputVideo, 1);
+					intervalSlider.pendingT2Val = t;
+					intervalSlider.thumb2Value = t;
+					controlsUI.enabled = true;
+					preparePlayback ();
+				}
+				*/
+				
+				protected function application1_applicationCompleteHandler(event:FlexEvent):void
+				{
+					Security.allowDomain('*');
+					Security.allowDomain('null');
+					//Security.loadPolicyFile('crossdomain.xml');
+					FlexGlobals.topLevelApplication.addEventListener(KeyboardEvent.KEY_DOWN, keyHandler);
+					filePathToEdit = FlexGlobals.topLevelApplication.parameters.filePathToEdit;
+					filePathToEdit = (filePathToEdit == null || filePathToEdit == '') ? 'demo.flv' : filePathToEdit;
+					downloadVideoFLVs();
+					tt.addEventListener(TimerEvent.TIMER, timertick);
+				}
+				
+				private function keyHandler(event:KeyboardEvent):void 
+				{
+					var nextkftime:uint;
+					switch (event.keyCode) {
+						case 39: 
+							nextkftime = flvwiz.getNextKeyframeTime(inputVideo, intervalSlider.pendingT1Val+1);
+							if (nextkftime < intervalSlider.pendingT2Val)
+								intervalSlider.pendingT1Val = nextkftime;
+							break;
+						case 37: 
+							nextkftime = flvwiz.getNextKeyframeTime(inputVideo, intervalSlider.pendingT1Val-1, true);
+							if (nextkftime < intervalSlider.pendingT2Val)
+								intervalSlider.pendingT1Val = nextkftime;
+							break;
+						case 38: 
+							nextkftime = flvwiz.getNextKeyframeTime(inputVideo, intervalSlider.pendingT2Val+1);
+							if (nextkftime > intervalSlider.pendingT1Val)
+								intervalSlider.pendingT2Val = nextkftime;
+							break;
+						case 40: 
+							nextkftime = flvwiz.getNextKeyframeTime(inputVideo, intervalSlider.pendingT2Val-1, true);
+							if (nextkftime > intervalSlider.pendingT1Val)
+								intervalSlider.pendingT2Val = nextkftime;
+							break;
+					}
+				}
+				
+				private function downloadVideoFLVs():void {
 					ldr = new URLLoader();
 					ldr.addEventListener(Event.COMPLETE, downloaded);
 					ldr.dataFormat = URLLoaderDataFormat.BINARY;
-					ldr.load(new URLRequest('boy.flv'));
+					ldr.load(new URLRequest(filePathToEdit));
 				}
 				private function downloaded(event:Event):void {
 					inputVideo = ldr.data;
 					intervalSlider.minimum = 0;
 					intervalSlider.maximum = flvwiz.findDuration(inputVideo);
+					var t:uint = flvwiz.getNextKeyframeTime(inputVideo, 1);
+					intervalSlider.pendingT2Val = t;
+					intervalSlider.thumb2Value = t;
 					controlsUI.enabled = true;
 					preparePlayback ();
 				}
@@ -52,6 +131,7 @@
 					ns.play(null);
 					ns.client = new Object();
 					ns.client.onMetaData = function (...args):void {};
+					ns.checkPolicyFile = true;
 					videoScreen.video.attachNetStream(ns);
 					ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
 					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, 0, 1, true);
@@ -62,25 +142,61 @@
 				protected function chopVideo(action:String = 'add'):void
 				{
 					if (action == 'add') {
-						var vo:SliceVO = new SliceVO (intervalSlider.pendingT1Val, intervalSlider.pendingT2Val);
+						var vo:SliceVO = new SliceVO (intervalSlider.pendingT1Val, intervalSlider.pendingT2Val, inpointBD, outpointBD);
 						listData.addItem(vo);
 					}
 				}
 				
 				private function playback ():void {
+					var gotVideo:Boolean = mergeSequence();
+					if (!gotVideo) {
+						list.enabled = true;
+						tt.stop();
+						playbtn.selected = false;
+						return;
+					}
+					if (playbtn.selected) {
+						list.enabled = false;
+						tt.start();
+						totalMergedDurationMS = flvwiz.findDuration(mergedBytes);
+						ns.play(null);
+						ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
+						ns.soundTransform = new SoundTransform(1);
+						ns.appendBytes(mergedBytes);
+						ns.addEventListener(NetStatusEvent.NET_STATUS, netStreamStatus);
+					} else {
+						if (ns) {
+							tt.stop();
+							list.enabled = true;
+							ns.play(null);
+							ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
+						}
+					}
+				}
+				
+				private function netStreamStatus (event:NetStatusEvent):void {
+					switch (event.info.code) {
+						case 'NetStream.Buffer.Empty':
+							playbtn.selected = false;
+							tt.stop();
+							list.enabled = true;
+						break;
+					}
+				}
+				
+				private function mergeSequence ():Boolean 
+				{
+					if (listData.length == 0) return false;
 					var slice:ByteArray;
 					var streams:Vector.<ByteArray> = new Vector.<ByteArray>();
 					var tempVO:SliceVO;
 					for (var i:int = 0; i < listData.length; ++i) {
 						tempVO = listData.getItemAt(i) as SliceVO;
-						slice = flvwiz.slice(inputVideo, tempVO.in_point, tempVO.out_point);
+						slice = flvwiz.slice(inputVideo, tempVO.in_point, tempVO.out_point, true);
 						streams[i] = slice;
 					}
 					mergedBytes = flvwiz.concatStreams(streams);
-					ns.play(null);
-					ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
-					ns.soundTransform = new SoundTransform(1);
-					ns.appendBytes(mergedBytes);
+					return true;
 				}
 
 				protected function list_dragCompleteHandler(event:DragEvent):void
@@ -93,77 +209,143 @@
 						case DragManager.MOVE:
 							chopVideo('move');
 							break;
+
+						case DragManager.COPY:
+							//var vo:SliceVO = new SliceVO (intervalSlider.pendingT1Val, intervalSlider.pendingT2Val, inpointBD, outpointBD);
+							//listData.addItem(vo);
+							break;
 					}
 				}
-
-				protected function image1_dragEnterHandler(event:DragEvent):void
-				{
-					DragManager.acceptDragDrop(trashcan);
+				
+				private function dragDropHandler(event:DragEvent):void {
+					//handle the copy from mouse drag + control
+					if (event.action == DragManager.COPY) {
+						event.preventDefault();
+						var dropTarget:List = event.currentTarget as List;
+						var itemsVector:Vector.<Object> = event.dragSource.dataForFormat('itemsByIndex') as Vector.<Object>;
+						var dropLoc:DropLocation = event.currentTarget.layout.calculateDropLocation(event);
+						IList(dropTarget.dataProvider).addItemAt(itemsVector[0], dropLoc.dropIndex);
+						dropTarget.layout.hideDropIndicator();
+					}
 				}
-
 
 				protected function intervalSlider_propertyChangeHandler(event:PropertyChangeEvent):void
 				{
 					if (ns == null) return;
 					ns.play(null);
 					ns.appendBytesAction(NetStreamAppendBytesAction.RESET_BEGIN);
-					var seekTime:uint = intervalSlider[event.property];
+					lastChangedThumb = event.property as String;
+					var seekTime:uint = intervalSlider[lastChangedThumb];
 					var endTime:uint = seekTime + 100;
-					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, seekTime, endTime, false);
+					var seekPosBytes:ByteArray = flvwiz.slice(inputVideo, seekTime, endTime, true);
 					ns.soundTransform = new SoundTransform(0);
 					ns.appendBytes(seekPosBytes);
+					
+					if (event.property == 'pendingT1Val') {
+						//inpointBD.draw(videoScreen.video);
+						timerStr.text = convertTime(intervalSlider.pendingT1Val/1000) + '/' + convertTime(intervalSlider.maximum/1000);
+					} else if (event.property == 'pendingT2Val') {
+						//outpointBD.draw(videoScreen.video);
+						timerStr.text = convertTime(intervalSlider.pendingT2Val/1000) + '/' + convertTime(intervalSlider.maximum/1000);
+					}
 				}
 				
-				private function saveFile (event:MouseEvent):void {
-					if (!mergedBytes && (listData.length < 1)) return;
-					var slice:ByteArray;
-					var streams:Vector.<ByteArray> = new Vector.<ByteArray>();
-					var tempVO:SliceVO;
-					for (var i:int = 0; i < listData.length; ++i) {
-						tempVO = listData.getItemAt(i) as SliceVO;
-						slice = flvwiz.slice(inputVideo, tempVO.in_point, tempVO.out_point);
-						streams[i] = slice;
+				private function adjustCutPointsToKeyframes ():void {
+					var prevkftime:uint;
+					var nextkftime:uint;
+					if (lastChangedThumb == '') return;
+					if (lastChangedThumb == 'pendingT1Val') {
+						prevkftime = flvwiz.getNextKeyframeTime(inputVideo, intervalSlider.pendingT1Val+1);
+						intervalSlider.pendingT1Val = prevkftime;
+						intervalSlider.thumb1Value = prevkftime;
 					}
-					mergedBytes = flvwiz.concatStreams(streams);
+					if (lastChangedThumb == 'pendingT2Val') {
+						nextkftime = flvwiz.getNextKeyframeTime(inputVideo, intervalSlider.pendingT2Val+1);
+						intervalSlider.pendingT2Val = nextkftime;
+						intervalSlider.thumb2Value = nextkftime;
+					}
+				}
+				
+				private function saveFile ():void {
+					var gotVideo:Boolean = mergeSequence();
+					if (!gotVideo) {
+						Alert.show("Sequence video is empty!\nPlease create a video before saving.", "Sequence video is empty!");
+						return;
+					}
 					var fR:FileReference = new FileReference();
-					fR.save(mergedBytes, "mergedVideo.flv");
+					fR.save(mergedBytes, "edited_video.flv");
+				}
+				
+				private function convertTime(secs:Number):String
+				{
+					var h:Number=Math.floor(secs/3600);
+					var m:Number=Math.floor((secs%3600)/60);
+					var s:Number=Math.floor((secs%3600)%60);
+					return(h==0?"":(h<10?"0"+h.toString()+":":h.toString()+":"))+(m<10?"0"+m.toString():m.toString())+":"+(s<10?"0"+s.toString():s.toString());
+				}
+				
+				private function getCurrentTime():Number {
+					var time:Number = 0;
+					if (playbtn.selected && ns) time = ns.time;
+					return time;
+				}
+
+				private function timertick (event:TimerEvent):void {
+					timerStr.text = convertTime(getCurrentTime()) + '/' + convertTime(Math.round(totalMergedDurationMS/1000));
 				}
 
 			]]>
 		</fx:Script>
 		
 	<s:VGroup id="controlsUI" enabled="false" >
-		<s:HGroup verticalAlign="bottom" gap="70" horizontalAlign="left">
-			<video:VideoScreenControl id="videoScreen" width="400" height="300" />
-			<s:Image id="trashcan"
-				dragEnter="image1_dragEnterHandler(event)"
-				source="@Embed(source='empty-trash.png')" />
+		<s:HGroup verticalAlign="bottom" paddingTop="10" paddingLeft="9" gap="70" horizontalAlign="left">
+			<!-- 334 x 253 -->
+			<video:VideoScreenControl id="videoScreen" width="334" height="253" />
 		</s:HGroup>
-		<s:List id="list" width="600" height="100"
-				dragEnabled="true"
-				dropEnabled="true"
-				dragMoveEnabled="true"
-				dragComplete="list_dragCompleteHandler(event)"
-				horizontalCenter="0" verticalCenter="0">
-			<s:layout>
-				<s:HorizontalLayout gap="6" horizontalAlign="left" />
-			</s:layout>
-			<s:dataProvider>
-				<s:ArrayList id="listData">
-				</s:ArrayList>
-			</s:dataProvider>
-		</s:List>
-		<s:Button id="chopBtn" width="600" label="Chop!" click="chopVideo()"/>
-		<s:Button id="playBtn" width="600" label="Play!" click="playback()"/>
-		<visualscripts:IntervalSlider id="intervalSlider" 
-			   width="600" height="20" y="50"
-			   snapInterval="1"
-			   minimum="1"
-			   maximum="100"
-			   thumb1Value="0"
-			   thumb2Value="1"
-			   middleIsFixedLength="true"
-			   propertyChange="intervalSlider_propertyChangeHandler(event)"
-			   liveDragging="true"/>
+		<s:HGroup paddingRight="9" horizontalAlign="right" width="100%" >
+			<s:Label id="timerStr" text="00:00/00:00"
+					 fontFamily="Arial" fontSize="9" color="0xe4e4e4"  />
+		</s:HGroup>
+		<s:HGroup verticalAlign="middle" paddingLeft="7" gap="4">
+			<s:Button id="chopBtn" click="chopVideo()" 
+					  skinClass="skins.buttons.ChopBtnSkin" />
+			<visualscripts:IntervalSlider id="intervalSlider"
+				  skinClass="skins.intervalslider.IntervalSliderSkin"
+				  width="277" height="16" 
+				  snapInterval="1"
+				  minimum="1" maximum="100"
+				  thumb1Value="0" thumb2Value="1"
+				  middleIsFixedLength="true"
+				  mouseUp="{adjustCutPointsToKeyframes ()}"
+				  propertyChange="intervalSlider_propertyChangeHandler(event)"
+				  liveDragging="true"/>
+		</s:HGroup>
+		<s:Spacer height="2" />
+		<s:HGroup verticalAlign="middle" paddingLeft="7" gap="2">
+			<s:ToggleButton id="playbtn" click="playback()" 
+							skinClass="skins.buttons.PlayBtnSkin" />
+			<s:List id="list" width="308" height="42"
+					skinClass="skins.list.ListSkin"
+					dragEnabled="true"
+					dropEnabled="true"
+					dragMoveEnabled="true"
+					dragComplete="list_dragCompleteHandler(event)"
+					dragDrop="dragDropHandler(event)"
+					horizontalCenter="0" verticalCenter="0" >
+				<s:layout>
+					<s:HorizontalLayout gap="6" horizontalAlign="left" />
+				</s:layout>
+				<s:dataProvider>
+					<s:ArrayList id="listData" >
+					</s:ArrayList>
+				</s:dataProvider>
+			</s:List>
+		</s:HGroup>
+		<s:Spacer height="1" />
+		<s:HGroup width="100%" horizontalAlign="right" gap="10">
+			<s:Button id="saveBtn" click="saveFile()" skinClass="skins.buttons.SaveBtnSkin"/>
+			<s:Button id="uploadBtn" skinClass="skins.buttons.UploadBtnSkin"/>
+		</s:HGroup>
 	</s:VGroup>
+	<!--s:Button click="onButtonClick(event);" label="load"/-->
 </s:Application>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Declarations> 
+		<fx:Component id="dropIndicator"> 
+			<s:Group minWidth="3" minHeight="3" maxWidth="3" maxHeight="3">
+				<s:Line width="8" left="-4" bottom="4">
+					<s:stroke>
+						<s:SolidColorStroke color="0x1482b4" weight="2"/>
+					</s:stroke>
+				</s:Line>
+				
+				<s:Path left="-46" top="-2" scaleX="-1" alpha="0.8" rotation="195"
+						data="M 0 5 L 30 5 26 0 40 8 26 16 30 11 0 11 Z">
+					<s:stroke>
+						<s:LinearGradientStroke rotation="5" weight="1">
+							<s:GradientEntry color="0x117acc"/>
+							<s:GradientEntry color="0x000000"/>
+						</s:LinearGradientStroke>
+					</s:stroke>
+					<s:fill>
+						<s:LinearGradient rotation="90">
+							<s:GradientEntry color="0x004259" />
+							<s:GradientEntry color="0x26ccec" />
+						</s:LinearGradient>
+					</s:fill>
+				</s:Path>
+			</s:Group> 
+		</fx:Component> 
+	</fx:Declarations>
+	
+	<!-- host component -->
+	<fx:Metadata>
+		[HostComponent("spark.components.List")]
+	</fx:Metadata>
+	
+	<!-- states -->
+	<s:states>
+		<s:State name="disabled" />
+		<s:State name="normal" />
+		<s:State name="over" />
+	</s:states>
+	
+	<!-- background -->
+	<s:Rect top="0" right="0" bottom="0" left="0" radiusX="4" radiusY="4" >
+		<s:filters>
+			<s:DropShadowFilter blurX="5" blurY="5" alpha="0.55" distance="0" angle="90" />
+			<s:DropShadowFilter blurX="6" blurY="6" alpha="0.17" distance="0" angle="90" inner="true" />
+		</s:filters>
+		<s:stroke>
+			<s:SolidColorStroke color="0x9aa9b9" weight="2" alpha="0.1"/>
+		</s:stroke>
+		<s:fill>
+			<s:SolidColor color="0x0" color.over="0xf8f8f8" />
+		</s:fill>
+	</s:Rect>
+	
+	<!-- scroller -->
+	<s:Scroller id="scroller" left="5" top="6" right="5" bottom="0"
+				skinClass="skins.list.ListScrollerSkin"
+				horizontalScrollPolicy="on" verticalScrollPolicy="off" 
+				minViewportInset="1" focusEnabled="false">
+		<!-- container for data-->
+		<s:DataGroup id="dataGroup" itemRenderer="com.kaltura.video.view.ListItemRenderer">
+			<s:layout>
+				<s:HorizontalLayout gap="3" horizontalAlign="left" verticalAlign="top" />
+			</s:layout>
+		</s:DataGroup>
+		
+	</s:Scroller>
+	
+	<s:BitmapImage source="@Embed('/assets/list/right_shadow.png')" smooth="true" right="5" top="6" />
+	<s:BitmapImage source="@Embed('/assets/list/right_shadow.png')" rotation="180" smooth="true" width="14" left="2" top="6" />
+	
+	<!-- s:Group id="emptyMsgBox" left="0" right="0" top="0" bottom="0" alpha=".7"
+			 visible="{!dataGroup.dataProvider.length}" 
+			 includeInLayout="{!dataGroup.dataProvider.length}">
+		
+		<s:Rect left="0" right="0" top="0" bottom="0">
+			<s:fill>
+				<s:SolidColor color="0x000000" />
+			</s:fill>
+		</s:Rect>
+		
+		<s:Label text="Use the Chop button to add clips..." color="0xffffff" 
+				 verticalCenter="0" horizontalCenter="0" />
+	</s:Group -->
+	
+	<!-- SkinParts
+	name=scroller, type=spark.components.Scroller, required=false
+	name=dropIndicator, type=mx.core.IFactory, required=false
+	name=dataGroup, type=spark.components.DataGroup, required=false
+	name=dataGroup, type=spark.components.DataGroup, required=false
+	-->
+</s:Skin>
