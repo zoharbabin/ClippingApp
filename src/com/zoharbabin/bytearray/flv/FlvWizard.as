@@ -1,6 +1,6 @@
 /**
  * In addition to the MIT license, if you make use of this code
- * you should notify the author.
+ * you should notify the author (Zohar Babin: z.babin@gmail.com).
  * 
  * This program is distributed under the terms of the MIT License as found 
  * in a file called LICENSE. If it is not present, the license
