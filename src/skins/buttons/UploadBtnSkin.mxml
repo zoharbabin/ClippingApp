@@ -15,7 +15,7 @@
 		<s:State name="up" />
 	</s:states>
 	
-	<s:BitmapImage source="@Embed('/assets/youtubebtn/youtube_up.png')" smooth="true" includeIn="disabled" />
+	<s:BitmapImage source="@Embed('/assets/youtubebtn/youtube_up.png')" alpha="0.3" smooth="true" includeIn="disabled" />
 	<s:BitmapImage source="@Embed('/assets/youtubebtn/youtube_down.png')" smooth="true" includeIn="down" />
 	<s:BitmapImage source="@Embed('/assets/youtubebtn/youtube_over.png')" smooth="true" includeIn="over" />
 	<s:BitmapImage source="@Embed('/assets/youtubebtn/youtube_up.png')" smooth="true" includeIn="up" />

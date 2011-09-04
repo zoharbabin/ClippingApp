@@ -14,7 +14,6 @@
   </compiler>
   <applications>
     <application path="ClippingApp.mxml"/>
-    <application path="YTtest.mxml"/>
   </applications>
   <modules/>
   <buildCSSFiles/>

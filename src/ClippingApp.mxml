@@ -6,8 +6,32 @@
 	xmlns:fx="http://ns.adobe.com/mxml/2009" 
 	xmlns:s="library://ns.adobe.com/flex/spark"
 	xmlns:visualscripts="com.blogpspot.visualscripts.*" 
-	xmlns:video="com.kaltura.video.*">
+	xmlns:video="com.kaltura.video.*" xmlns:youtube="com.zoharbabin.youtube.*" xmlns:mx="library://ns.adobe.com/flex/mx">
 		
+		<fx:Style>
+			@namespace s "library://ns.adobe.com/flex/spark";
+			@namespace visualscripts "com.blogpspot.visualscripts.*";
+			@namespace video "com.kaltura.video.*";
+			@namespace youtube "com.zoharbabin.youtube.*";
+			@namespace mx "library://ns.adobe.com/flex/mx";
+			mx|Alert{
+				color : #ffffff;
+				background-color: #2c2d37;
+				header-height:19;
+				corner-radius :6;
+				border-style :solid;
+				border-color : #414548;
+				title-style-name : "alerttitle";
+			}
+			.title{
+				font-family :Verdana;
+				font-size :10;
+				font-weight :bold;
+				color :#ffffff;
+				background-color: #41494f;
+			}
+		</fx:Style>
+	
 		<fx:Script>
 			<![CDATA[
 				import com.kaltura.video.vo.SliceVO;
@@ -22,6 +46,7 @@
 				import mx.events.DragEvent;
 				import mx.events.FlexEvent;
 				import mx.events.PropertyChangeEvent;
+				import mx.events.ValidationResultEvent;
 				import mx.managers.DragManager;
 				
 				import skins.buttons.ChopBtnSkin;
@@ -40,11 +65,15 @@
 				private var outpointBD:BitmapData = new BitmapData (400, 300, false, 0xcafcaf);
 				private var lastChangedThumb:String = '';
 				private var lastChangedThumbDirection:int = 0; //0=right, 1=left
-				private var filePathToEdit:String = 'demo.flv';
+				private var filePathToEdit:String = 'oren.flv';
+				private var ytUserEmail:String = '';
+				private var ytUserPassword:String = '';
 				private var totalMergedDurationMS:Number = 0; 
 				private var tt:Timer = new Timer (100);
 				
 				private var fileRef:FileReference = new FileReference();
+				
+				private var loginToYouTubeSuccess:Boolean = false;
 				
 				/* private function onButtonClick(e:MouseEvent):void {
 					fileRef.browse([new FileFilter("Video", "*.flv")]);
@@ -73,11 +102,31 @@
 				{
 					Security.allowDomain('*');
 					Security.allowDomain('null');
-					//Security.loadPolicyFile('crossdomain.xml');
+					
+					//register to keydown for chop keyboard support
 					FlexGlobals.topLevelApplication.addEventListener(KeyboardEvent.KEY_DOWN, keyHandler);
-					filePathToEdit = FlexGlobals.topLevelApplication.parameters.filePathToEdit;
-					filePathToEdit = (filePathToEdit == null || filePathToEdit == '') ? 'demo.flv' : filePathToEdit;
-					downloadVideoFLVs();
+					
+					//get parameters from flashvars
+					filePathToEdit = FlexGlobals.topLevelApplication.parameters.editfilepath;
+					if (filePathToEdit == null || filePathToEdit == '') {
+						controlsUI.enabled = false;
+						Alert.show("Please specify the file to edit.\n(editfilepath)");
+						return;
+					} else {
+						downloadVideoFLVs();
+					}
+					ytUserEmail = FlexGlobals.topLevelApplication.parameters.youtubeemail;
+					if (ytUserEmail == null || ytUserEmail == '') { 
+						Alert.show("To share your edit in YouTube,\nPlease specify YouTube user email.\n(youtubeemail)");
+					} else {
+						ytUserPassword = FlexGlobals.topLevelApplication.parameters.youtubepassword;
+						if (ytUserPassword == null || ytUserPassword == '') {
+							Alert.show("To share your edit in YouTube,\nPlease pass YouTube user password.\n(youtubepassword)");
+						} else {
+							ytUploader.youTubeLogin(ytUserEmail, ytUserPassword);
+						}
+					}
+
 					tt.addEventListener(TimerEvent.TIMER, timertick);
 				}
 				
@@ -144,6 +193,7 @@
 					if (action == 'add') {
 						var vo:SliceVO = new SliceVO (intervalSlider.pendingT1Val, intervalSlider.pendingT2Val, inpointBD, outpointBD);
 						listData.addItem(vo);
+						mergeSequence();
 					}
 				}
 				
@@ -196,6 +246,7 @@
 						streams[i] = slice;
 					}
 					mergedBytes = flvwiz.concatStreams(streams);
+					if (loginToYouTubeSuccess) uploadBtn.enabled = true;
 					return true;
 				}
 
@@ -208,11 +259,11 @@
 						
 						case DragManager.MOVE:
 							chopVideo('move');
+							mergeSequence();
 							break;
 
 						case DragManager.COPY:
-							//var vo:SliceVO = new SliceVO (intervalSlider.pendingT1Val, intervalSlider.pendingT2Val, inpointBD, outpointBD);
-							//listData.addItem(vo);
+							mergeSequence();
 							break;
 					}
 				}
@@ -293,6 +344,60 @@
 				private function timertick (event:TimerEvent):void {
 					timerStr.text = convertTime(getCurrentTime()) + '/' + convertTime(Math.round(totalMergedDurationMS/1000));
 				}
+				
+				protected function ytUploader_loginSuccessHandler(event:Event):void
+				{
+					loginToYouTubeSuccess = true;
+					if (listData.length > 0) uploadBtn.enabled = true;
+					trace('YouTube login success');
+				}
+				
+				protected function ytUploader_loginFailedHandler(event:Event):void
+				{
+					trace('YouTube login failed');
+				}
+				
+				protected function ytUploader_uploadCompleteHandler(event:Event):void
+				{
+					trace("upload to YouTube completed successfully");
+					controlsUI.enabled = true;
+					ytUploadForm.enabled = true;
+					ytUploadForm.visible = false;
+					uploadprogress.visible = false;
+					Alert.show("Upload to YouTube Completed Successfully!");
+				}
+				
+				protected function ytUploader_uploadFailedHandler(event:Event):void
+				{
+					trace("upload to YouTube failed");
+					controlsUI.enabled = true;
+					ytUploadForm.enabled = true;
+					ytUploadForm.visible = false;
+					uploadprogress.visible = false;
+					Alert.show("Upload to YouTube Failed.");
+				}
+
+				protected function uploadToYouTube(event:MouseEvent):void
+				{
+					var vname:Array = vidNameValidator.validate().results;
+					if (vname == null) {
+						ytUploader.uploadByteArray(mergedBytes);
+						ytUploadForm.enabled = false;
+						uploadprogress.visible = true;
+						errorMsgName.text = "";
+					}
+				}
+				
+				private function invalidName(event:ValidationResultEvent): void
+				{
+					errorMsgName.text = "Please enter a video name."; 
+				}
+
+				protected function uploadBtn_clickHandler(event:MouseEvent):void
+				{
+					ytUploadForm.visible = true;
+					controlsUI.enabled = false;
+				}
 
 			]]>
 		</fx:Script>
@@ -344,8 +449,61 @@
 		<s:Spacer height="1" />
 		<s:HGroup width="100%" horizontalAlign="right" gap="10">
 			<s:Button id="saveBtn" click="saveFile()" skinClass="skins.buttons.SaveBtnSkin"/>
-			<s:Button id="uploadBtn" skinClass="skins.buttons.UploadBtnSkin"/>
+			<s:Button id="uploadBtn" click="uploadBtn_clickHandler(event)" 
+					  skinClass="skins.buttons.UploadBtnSkin" enabled="false"/>
 		</s:HGroup>
 	</s:VGroup>
+	<s:Form includeInLayout="false" id="ytUploadForm"
+			visible="false"
+			x="30" y="40" defaultButton="{submitBtn}"
+			width="300" height="300"
+			skinClass="skins.YouTubeUploadForm.FormYTUploadSkin" >
+		<s:FormHeading label="Upload To " width="100%" 
+					   skinClass="skins.YouTubeUploadForm.FormHeadingYTUploadSkin" />
+		
+		<s:Spacer height="20" />
+		
+		<s:FormItem label="Video Name:" color="white" required="true"
+					requiredIndicatorSource="@Embed('/assets/asterisk.png')">
+			<s:TextInput id="vidName" width="100%" color="black" />
+		</s:FormItem>
+		<s:FormItem label="Description:" color="white" 
+					requiredIndicatorSource="@Embed('/assets/asterisk.png')" >
+			<s:TextInput id="vidDesc" width="100%" color="black" />
+		</s:FormItem>
+		<s:FormItem label="Tags:" color="white"  
+					requiredIndicatorSource="@Embed('/assets/asterisk.png')" >
+			<s:TextInput id="vidKeywords" width="100%" color="black" />
+		</s:FormItem>
+		<s:VGroup width="100%" horizontalAlign="left" paddingLeft="20" 
+				  fontWeight="bold" paddingTop="10" gap="2" >
+			<s:Label id="errorMsgName" text="" color="red" />
+		</s:VGroup>
+		<s:VGroup width="100%" horizontalAlign="right" 
+				  paddingRight="10" paddingTop="20" paddingLeft="10" gap="10">
+			<s:Button id="submitBtn" skinClass="skins.buttons.UploadBtnSkin" 
+							click="uploadToYouTube(event)" />
+			<mx:ProgressBar id="uploadprogress" width="100%" chromeColor="0x3e3f47" color="white" 
+					indeterminateSkin="skins.progressbar.ProgressIndeterminateSkin" 
+					indeterminate="true" label="Uploading..." bottom="0" visible="false"/>
+		</s:VGroup>
+	</s:Form>
+	
+	<fx:Declarations>
+		<youtube:YouTubeDirectUpload id="ytUploader" appName="ClippingApp" 
+									 loginSuccess="ytUploader_loginSuccessHandler(event)"
+									 loginFailed="ytUploader_loginFailedHandler(event)"
+									 uploadComplete="ytUploader_uploadCompleteHandler(event)"
+									 uploadFailed="ytUploader_uploadFailedHandler(event)"
+									 developerKey="AI39si5WWmzMI3O3yPXeLipDKbAzyhGIxLWirhx49EleCJ2dbkDibJArwRTMsjsmYCqcKX8QJMpSRTaErDPvuMieA5qHxTaygQ" 
+									 ytKeywords="{vidKeywords.text}"
+									 ytVideoDescription="{vidDesc.text}"
+									 ytVideoName="{vidName.text}" />
+		
+		<mx:StringValidator id="vidNameValidator" required="true" source="{vidName}" property="text"
+				minLength="1" invalid="invalidName(event)"
+				requiredFieldError="X" trigger="{submitBtn}" triggerEvent="click" />
+	</fx:Declarations>
+			
 	<!--s:Button click="onButtonClick(event);" label="load"/-->
 </s:Application>
