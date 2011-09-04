@@ -1,3 +1,15 @@
+/**
+ * In addition to the MIT license, if you make use of this code
+ * you should notify the author (Zohar Babin: z.babin@gmail.com).
+ * 
+ * This program is distributed under the terms of the MIT License as found 
+ * in a file called LICENSE. If it is not present, the license
+ * is always available at http://www.opensource.org/licenses/mit-license.php.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * without any waranty; without even the implied warranty of merchantability
+ * or fitness for a particular purpose. See the MIT License for full details.
+ **/ 
 package com.zoharbabin.youtube
 {
 	import flash.events.DataEvent;
@@ -40,6 +52,13 @@ package com.zoharbabin.youtube
 	 **/
 	[Event(name="uploadFailed", type="flash.events.Event")]
 	
+	/**
+	 * A utility class for uploading video files or video ByteArrays to YouTube 
+	 * using YouTube direct upload (user email and password instead of OAuth redirects).
+	 * 
+	 * @author Zohar Babin (z.babin@gmail.com)
+	 * @see http://www.zoharbabin.com/youtube-direct-upload-actionscript3
+	 **/
 	public class YouTubeDirectUpload extends EventDispatcher
 	{
 		import com.adobe.net.URI;
