@@ -1,0 +1,84 @@
+	.leftInskin
+	{
+	  left:0px;
+      top: 0px;
+      width: 112px;
+      position: absolute;	
+	}
+	
+	.right
+   {
+      left: 832px;
+      top: 0px;
+      width: 192px;
+      height: 544px;
+      position: absolute;
+   }
+   
+   .top
+   {
+     top: 0px;
+	   height: 124px;
+	   width: 1024px;
+	   position: absolute;
+	   text-align:center;
+	   overflow:hidden;
+   }
+   
+   .bottom{
+     top: 544px;
+	   left: 0px;
+	   height: 224px;
+	   width: 832px;
+	   position: absolute;
+	   text-align:center; 
+   }
+   
+   .bottom_ad
+   {
+   	top: 544px;
+   	left: 832px;
+   	width: 192px;
+   	height: 224px;
+   	padding-top: 30px;
+	   position: absolute;
+	   text-align:center;
+	   overflow:hidden;
+   }
+  
+   .workSpace
+   {
+      position: absolute;
+      z-index: -1;
+   }
+   .toolbar
+   {
+      height: 43px;
+      width: 100%;
+      position: absolute;
+      top:81px;
+      z-index: -1;
+      visibility: hidden;
+   }
+   #sponsorsVer2
+   {
+      text-align:center;
+      width:160px;
+      height:18px;
+      position:absolute;
+      top:74px;
+      cursor:default;
+      font-family:Arial;
+      font-size:14px;
+      color: #444444;           
+   }
+   
+   #AdFrameVer2
+   {
+      position:absolute;
+      top:94px;
+      left:3px;
+      width:160px;
+      height:600px;
+   }
+	

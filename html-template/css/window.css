@@ -1,0 +1,202 @@
+
+body
+{
+	line-height: 1.3em;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-left: 0px;
+	font-family: Verdana, Helvetica, Sans-Serif;
+	font-size: 0.71em;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+	background-color: #DBE1DB;
+}
+
+h2
+{
+	width: auto;
+	color: #683;
+	font-size: 1.2em;
+	margin-top: 10px;
+	margin-right: 0px;
+	margin-bottom: 10px;
+	margin-left: -8px;
+	border-bottom-color: #ccc;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+.sidebarBox
+{
+	display: block;
+}
+
+.sidebarBox, .subMenuBox
+{
+	width: 200px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 10px;
+	margin-left: 0px;
+	float: left;
+}
+.sidebarBox .boxHead, .subMenuBox .boxHead, .main .boxHead
+{
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+	background-image: url("../img/master_page.png");
+	background-attachment: scroll;
+	background-repeat: no-repeat;
+	background-position-x: right;
+	background-position-y: -207px;
+	background-size: auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+	background-color: transparent;
+}
+.sidebarBox .boxHead .boxLeft, .subMenuBox .boxHead .boxLeft, .main .boxHead .boxLeft
+{
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-left: 0px;
+	margin-top: 0px;
+	margin-right: 10px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+	background-image: url("../img/master_page.png");
+	background-attachment: scroll;
+	background-repeat: no-repeat;
+	background-position-x: 0px;
+	background-position-y: -207px;
+	background-size: auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+	background-color: transparent;
+}
+.sidebarBox .boxHead h2, .subMenuBox .boxHead h2, .main .boxHead h2
+{
+	color: #fff;
+	padding-top: 6px;
+	padding-right: 12px;
+	padding-bottom: 4px;
+	padding-left: 12px;
+	font-size: 1.1em;
+	font-weight: 700;
+	margin-top: 0px;
+	margin-right: -10px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+}
+.sidebarBox .boxBody, .subMenuBox .boxBody, .main .boxBody
+{
+	padding-top: 8px;
+	padding-right: 12px;
+	padding-bottom: 15px;
+	padding-left: 12px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+	border-right-color: #ccc;
+	border-left-color: #ccc;
+	border-right-width: 1px;
+	border-left-width: 1px;
+	border-right-style: solid;
+	border-left-style: solid;
+	background-image: none;
+	background-attachment: scroll;
+	background-repeat: repeat;
+	background-position-x: 0%;
+	background-position-y: 0%;
+	background-size: auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+	background-color: rgb(255, 255, 255);
+}
+.sidebarBox .boxFooter, .subMenuBox .boxFooter, .main .boxFooter
+{
+	height: 11px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+	background-image: url("../img/master_page.png");
+	background-attachment: scroll;
+	background-repeat: no-repeat;
+	background-position-x: right;
+	background-position-y: bottom;
+	background-size: auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+	background-color: transparent;
+}
+.sidebarBox .boxFooter .boxLeft, .subMenuBox .boxFooter .boxLeft, .main .boxFooter .boxLeft
+{
+	width: 10px;
+	height: 11px;
+	float: left;
+	background-image: url("../img/master_page.png");
+	background-attachment: scroll;
+	background-repeat: no-repeat;
+	background-position-x: left;
+	background-position-y: bottom;
+	background-size: auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+	background-color: transparent;
+}
+.sidebarBox .boxBody, .subMenuBox .boxBody
+{
+	padding-bottom: 1px;
+}
+
+.sidebarBox a, .link
+{
+	padding-top: 2px;
+	padding-right: 0px;
+	padding-bottom: 2px;
+	padding-left: 0px;
+	display: block;
+	text-decoration: none;
+	color: white;
+}
+.boxContent
+{
+	left: -11px;
+	top: -8px;
+	width: 196px;
+	display: block;
+	position: relative;
+}
+
+.youtubeiframe
+{
+	width: 484px;
+	height: 390px;
+}
+
+.youtubeiframesmall
+{
+	width: 244px;
+	height: 195px;
+}
+
+.meebochat
+{
+	width: 192px;
+	height: 275px;
+}

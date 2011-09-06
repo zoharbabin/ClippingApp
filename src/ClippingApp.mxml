@@ -50,6 +50,8 @@
 				import mx.managers.DragManager;
 				
 				import skins.buttons.ChopBtnSkin;
+				import skins.buttons.CloseBtnSkin;
+				import skins.buttons.LoginBtnSkin;
 				import skins.buttons.PlayBtnSkin;
 				import skins.list.ListSkin;
 				
@@ -66,8 +68,12 @@
 				private var lastChangedThumb:String = '';
 				private var lastChangedThumbDirection:int = 0; //0=right, 1=left
 				private var filePathToEdit:String = 'oren.flv';
-				private var ytUserEmail:String = '';
-				private var ytUserPassword:String = '';
+				
+				[Bindable]
+				public var ytUserEmail:String = '';
+				[Bindable]
+				public var ytUserPassword:String = '';
+				
 				private var totalMergedDurationMS:Number = 0; 
 				private var tt:Timer = new Timer (100);
 				
@@ -116,18 +122,33 @@
 						downloadVideoFLVs();
 					}
 					ytUserEmail = FlexGlobals.topLevelApplication.parameters.youtubeemail;
-					if (ytUserEmail == null || ytUserEmail == '') { 
-						Alert.show("To share your edit in YouTube,\nPlease specify YouTube user email.\n(youtubeemail)");
+					ytUserPassword = FlexGlobals.topLevelApplication.parameters.youtubepassword;
+					if ((ytUserEmail == null || ytUserEmail == '') || 
+						(ytUserPassword == null || ytUserPassword == '')) {
+						showFormLoginToYouTube();
 					} else {
-						ytUserPassword = FlexGlobals.topLevelApplication.parameters.youtubepassword;
-						if (ytUserPassword == null || ytUserPassword == '') {
-							Alert.show("To share your edit in YouTube,\nPlease pass YouTube user password.\n(youtubepassword)");
-						} else {
-							ytUploader.youTubeLogin(ytUserEmail, ytUserPassword);
-						}
+						ytUploader.youTubeLogin(ytUserEmail, ytUserPassword);
 					}
 
 					tt.addEventListener(TimerEvent.TIMER, timertick);
+				}
+				
+				private function formLoginToYouTube(event:MouseEvent):void {
+					errLoginMsg.visible = false;
+					loginprogress.visible = true;
+					ytUploader.youTubeLogin(ytUserEmail, ytUserPassword);
+				}
+				
+				private function showFormLoginToYouTube():void {
+					loginprogress.visible = false;
+					controlsUI.enabled = false;
+					ytLoginForm.visible = true;
+				}
+
+				private function hideFormLoginToYouTube():void {
+					loginprogress.visible = false;
+					controlsUI.enabled = true;
+					ytLoginForm.visible = false;
 				}
 				
 				private function keyHandler(event:KeyboardEvent):void 
@@ -350,21 +371,28 @@
 					loginToYouTubeSuccess = true;
 					if (listData.length > 0) uploadBtn.enabled = true;
 					trace('YouTube login success');
+					hideFormLoginToYouTube();
 				}
 				
 				protected function ytUploader_loginFailedHandler(event:Event):void
 				{
 					trace('YouTube login failed');
+					showFormLoginToYouTube();
+					errLoginMsg.visible = true;
 				}
 				
 				protected function ytUploader_uploadCompleteHandler(event:Event):void
 				{
 					trace("upload to YouTube completed successfully");
+					hideUploadYouTubeForm();
+					Alert.show("Upload to YouTube Completed Successfully!");
+				}
+				
+				private function hideUploadYouTubeForm():void {
 					controlsUI.enabled = true;
 					ytUploadForm.enabled = true;
 					ytUploadForm.visible = false;
 					uploadprogress.visible = false;
-					Alert.show("Upload to YouTube Completed Successfully!");
 				}
 				
 				protected function ytUploader_uploadFailedHandler(event:Event):void
@@ -487,6 +515,42 @@
 					indeterminateSkin="skins.progressbar.ProgressIndeterminateSkin" 
 					indeterminate="true" label="Uploading..." bottom="0" visible="false"/>
 		</s:VGroup>
+		<s:Spacer height="52" />
+		<s:Button id="closeuploadform" click="{hideUploadYouTubeForm()}" 
+				  skinClass="skins.buttons.CloseBtnSkin" />
+	</s:Form>
+	<s:Form includeInLayout="false" id="ytLoginForm"
+			visible="false"
+			x="30" y="40" defaultButton="{submitLoginBtn}"
+			width="300" height="300"
+			skinClass="skins.YouTubeUploadForm.FormYTUploadSkin" >
+		<s:FormHeading label="Login To " width="100%" 
+					   skinClass="skins.YouTubeUploadForm.FormHeadingYTUploadSkin" />
+		
+		<s:Spacer height="25" />
+		<s:Label id="errLoginMsg" visible="false" width="99.1%" backgroundColor="red" backgroundAlpha="0.8"
+				 fontWeight="bold" paddingLeft="10" paddingRight="20" paddingTop="5"
+				 color="black" text="Error loging in to YouTube.&#13;Please verify your email and password." />
+		<s:Spacer height="20" />
+		<s:FormItem label="Email:" color="white" required="true"
+					requiredIndicatorSource="@Embed('/assets/asterisk.png')">
+			<s:TextInput id="ytEmail" width="100%" color="black" text="@{ytUserEmail}" />
+		</s:FormItem>
+		<s:FormItem label="Password:" color="white" required="true"
+					requiredIndicatorSource="@Embed('/assets/asterisk.png')" >
+			<s:TextInput id="ytPassword" width="100%" color="black" text="@{ytUserPassword}" displayAsPassword="true" />
+		</s:FormItem>
+		<s:VGroup width="100%" horizontalAlign="right" 
+				  paddingRight="10" paddingTop="20" paddingLeft="10" gap="10">
+			<s:Button id="submitLoginBtn" skinClass="skins.buttons.LoginBtnSkin" 
+							click="formLoginToYouTube(event)" />
+			<mx:ProgressBar id="loginprogress" width="100%" chromeColor="0x3e3f47" color="white" 
+					indeterminateSkin="skins.progressbar.ProgressIndeterminateSkin" 
+					indeterminate="true" label="Login in..." bottom="0" visible="false"/>
+		</s:VGroup>
+		<s:Spacer height="60" />
+		<s:Button id="closeloginform" click="{hideFormLoginToYouTube()}" 
+				  skinClass="skins.buttons.CloseBtnSkin" />
 	</s:Form>
 	
 	<fx:Declarations>

@@ -1,18 +1,68 @@
 <html>
-  <head></head>
-  <body>
-    <object id="${swf}" name="${swf}" type="application/x-shockwave-flash" 
-	allowFullScreen="true" allowNetworking="all" allowScriptAccess="always" 
-	width="${width}" height="${height}" bgcolor="${bgcolor}"
-    xmlns:dc="http://purl.org/dc/terms/" xmlns:media="http://search.yahoo.com/searchmonkey/media/"
-    rel="media:video" resource="${swf}.swf" data="${swf}.swf">
-      <param name="allowFullScreen" value="true" />
-      <param name="allowNetworking" value="all" />
-      <param name="allowScriptAccess" value="always" />
-      <param name="bgcolor" value="${bgcolor}" />
-      <param name="flashVars" 
-      	value="editfilepath=indian.flv&youtubeemail=me@email.com&youtubepassword=somepassword" />
-      <param name="movie" value="${swf}.swf" />
-    </object>
+  <head>
+    <link rel="stylesheet" href='css/window.css' type="text/css" />
+    <script src="js/window.js" type="text/javascript"></script>
+	
+	<!-- EDITOR JS START -->
+	<script src="js/flashembed.js"></script>
+	<script>
+		var editorApp = { doEditorEmbed : function(videoFilePath, youTubeEmail, youTubePassword) { 
+				flashembed("editorph", 
+					{ // attributes and params: 
+						id : "${swf}", 
+						src : "${swf}.swf", 
+						width : 353, height : 412, 
+						bgcolor : "#000000", 
+						allowNetworking : "all",
+						allowFullscreen : true, 
+						allowScriptAccess : "always", 
+						version : [10,2] 
+					}, 
+					{ // flashvars (double-quote the values):
+						editfilepath : videoFilePath, 
+						youtubeemail : youTubeEmail, 
+						youtubepassword : youTubePassword
+					}
+				);
+			}
+		}
+		
+		function windowPageLoadHijack() {
+			windowPageLoad();
+			editorApp.doEditorEmbed("video_to_edit.flv","z.babin@gmail.com","1qaz2wsx");
+		}
+	</script>
+	<!-- EDITOR JS END -->
+	
+	<!-- EDITOR CSS START -->
+	<style type="text/css">
+		.editorwin {width:357;height:412;}
+	</style>
+	<!-- EDITOR CSS END -->
+	
+	
+  </head>
+  <body onload="windowPageLoadHijack()" scroll="no">
+    <div class="sidebarBox editorwin">
+			<div class="boxHead">
+				<div class="boxLeft">
+					<h2 class="boxTitle">Editor<span style="text-decoration: none; cursor: pointer; float: right; " ><b><a href="#" onclick="windowToggle('box1');">--</a></b></span></h2>
+				</div>
+			</div>
+			<div id="box1">
+				<div class="boxBody">
+					<span class="boxContent">
+						<!-- content of the box - START -->
+						<!-- EDITOR DIV START -->
+						<div id="editorph"></div>
+						<!-- EDITOR DIV END -->						
+						<!-- content of the box -  END  -->
+					</span>
+				</div>
+				<div class="boxFooter">
+					<div class="boxLeft">&nbsp;</div>
+				</div>
+			</div>
+		</div>
   </body>
 </html>
