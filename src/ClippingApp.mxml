@@ -6,7 +6,9 @@
 	xmlns:fx="http://ns.adobe.com/mxml/2009" 
 	xmlns:s="library://ns.adobe.com/flex/spark"
 	xmlns:visualscripts="com.blogpspot.visualscripts.*" 
-	xmlns:video="com.kaltura.video.*" xmlns:youtube="com.zoharbabin.youtube.*" xmlns:mx="library://ns.adobe.com/flex/mx">
+	xmlns:video="com.kaltura.video.*" 
+	xmlns:youtube="com.zoharbabin.youtube.*" 
+	xmlns:mx="library://ns.adobe.com/flex/mx">
 		
 		<fx:Style>
 			@namespace s "library://ns.adobe.com/flex/spark";
@@ -51,9 +53,11 @@
 				
 				import skins.buttons.ChopBtnSkin;
 				import skins.buttons.CloseBtnSkin;
+				import skins.buttons.LoadBtnSkin;
 				import skins.buttons.LoginBtnSkin;
 				import skins.buttons.PlayBtnSkin;
 				import skins.list.ListSkin;
+				import skins.loadVideoFileForm.FormHeadingLoadVideoFileSkin;
 				
 				import spark.layouts.supportClasses.DropLocation;
 				
@@ -81,29 +85,6 @@
 				
 				private var loginToYouTubeSuccess:Boolean = false;
 				
-				/* private function onButtonClick(e:MouseEvent):void {
-					fileRef.browse([new FileFilter("Video", "*.flv")]);
-					fileRef.addEventListener(Event.SELECT, onFileSelected);
-				}
-				
-				private function onFileSelected(e:Event):void {
-					fileRef.addEventListener(Event.COMPLETE, onFileLoaded);
-					fileRef.load();
-				}
-				
-				private function onFileLoaded(e:Event):void {
-					inputVideo = new ByteArray();
-					inputVideo.writeBytes(e.target.data);
-					intervalSlider.minimum = 0;
-					intervalSlider.maximum = flvwiz.findDuration(inputVideo);
-					var t:uint = flvwiz.getNextKeyframeTime(inputVideo, 1);
-					intervalSlider.pendingT2Val = t;
-					intervalSlider.thumb2Value = t;
-					controlsUI.enabled = true;
-					preparePlayback ();
-				}
-				*/
-				
 				protected function application1_applicationCompleteHandler(event:FlexEvent):void
 				{
 					Security.allowDomain('*');
@@ -114,10 +95,9 @@
 					
 					//get parameters from flashvars
 					filePathToEdit = FlexGlobals.topLevelApplication.parameters.editfilepath;
-					if (filePathToEdit == null || filePathToEdit == '') {
-						controlsUI.enabled = false;
-						Alert.show("Please specify the file to edit.\n(editfilepath)");
-						return;
+					var isFlv:Boolean = filePathToEdit.substring(filePathToEdit.length-4,filePathToEdit.length) == '.flv';
+					if (filePathToEdit == null || filePathToEdit == '' || !isFlv) {
+						showLoadVideoForm();
 					} else {
 						downloadVideoFLVs();
 					}
@@ -178,12 +158,56 @@
 					}
 				}
 				
+				private function showLoadVideoForm():void {
+					controlsUI.enabled = false;
+					loadprogress.visible = false;
+					browseForVideoFile.visible = true;
+				}
+				
+				private function hideLoadVideoForm():void {
+					controlsUI.enabled = true;
+					loadprogress.visible = false;
+					browseForVideoFile.visible = false;
+				}
+				
 				private function downloadVideoFLVs():void {
 					ldr = new URLLoader();
 					ldr.addEventListener(Event.COMPLETE, downloaded);
 					ldr.dataFormat = URLLoaderDataFormat.BINARY;
 					ldr.load(new URLRequest(filePathToEdit));
 				}
+				
+				private function loadVideoFile(event:MouseEvent):void {
+					fileRef.browse([new FileFilter("Video", "*.flv")]);
+					fileRef.addEventListener(Event.SELECT, onFileSelected);
+				}
+				
+				private function onFileSelected(e:Event):void {
+					var filePathToEdit:String = fileRef.name;
+					var isFlv:Boolean = filePathToEdit.substring(filePathToEdit.length-4,filePathToEdit.length) == '.flv';
+					if (isFlv) {
+						loadprogress.visible = true;
+						fileRef.addEventListener(Event.COMPLETE, onFileLoaded);
+						fileRef.load();
+					} else {
+						loadMsg.setStyle("color", "red");
+						loadMsg.text = "Please only select .flv files.";
+					}
+				}
+				
+				private function onFileLoaded(e:Event):void {
+					inputVideo = new ByteArray();
+					inputVideo.writeBytes(e.target.data);
+					intervalSlider.minimum = 0;
+					intervalSlider.maximum = flvwiz.findDuration(inputVideo);
+					var t:uint = flvwiz.getNextKeyframeTime(inputVideo, 1);
+					intervalSlider.pendingT2Val = t;
+					intervalSlider.thumb2Value = t;
+					controlsUI.enabled = true;
+					preparePlayback ();
+					hideLoadVideoForm();
+				}
+				
 				private function downloaded(event:Event):void {
 					inputVideo = ldr.data;
 					intervalSlider.minimum = 0;
@@ -552,6 +576,28 @@
 		<s:Button id="closeloginform" click="{hideFormLoginToYouTube()}" 
 				  skinClass="skins.buttons.CloseBtnSkin" />
 	</s:Form>
+	<s:Form includeInLayout="false" id="browseForVideoFile"
+			visible="false"
+			x="30" y="40" defaultButton="{submitLoadVideoFileBtn}"
+			width="300" height="300"
+			skinClass="skins.YouTubeUploadForm.FormYTUploadSkin" >
+		<s:FormHeading label="Load video" width="100%" 
+					   skinClass="skins.loadVideoFileForm.FormHeadingLoadVideoFileSkin" />
+		<s:Spacer height="25" />
+		<s:HGroup width="100%">
+			<s:Label width="70%" id="loadMsg"
+					 fontWeight="bold" paddingLeft="10" paddingRight="20" paddingTop="5"
+					 color="White" text="Please click load and select the video file to edit." />
+			<s:Button id="submitLoadVideoFileBtn" skinClass="skins.buttons.LoadBtnSkin" 
+					  click="loadVideoFile(event)" />
+		</s:HGroup>
+		<s:VGroup width="100%" horizontalAlign="right" 
+				  paddingRight="10" paddingTop="20" paddingLeft="10" gap="10">
+			<mx:ProgressBar id="loadprogress" width="100%" chromeColor="0x3e3f47" color="white" 
+					indeterminateSkin="skins.progressbar.ProgressIndeterminateSkin" 
+					indeterminate="true" label="Loading video..." bottom="0" visible="false"/>
+		</s:VGroup>
+	</s:Form>
 	
 	<fx:Declarations>
 		<youtube:YouTubeDirectUpload id="ytUploader" appName="ClippingApp" 
@@ -569,5 +615,4 @@
 				requiredFieldError="X" trigger="{submitBtn}" triggerEvent="click" />
 	</fx:Declarations>
 			
-	<!--s:Button click="onButtonClick(event);" label="load"/-->
 </s:Application>
