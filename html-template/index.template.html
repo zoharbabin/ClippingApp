@@ -21,7 +21,9 @@
 					{ // flashvars (double-quote the values):
 						editfilepath : videoFilePath, 
 						youtubeemail : youTubeEmail, 
-						youtubepassword : youTubePassword
+						youtubepassword : youTubePassword,
+						gatewayurl : 'ytapi/ytgateway.php',
+						gatewayurlupload : 'ytapi/savefileanduploadtoyt.php'
 					}
 				);
 			}
@@ -29,7 +31,7 @@
 		
 		function windowPageLoadHijack() {
 			windowPageLoad();
-			editorApp.doEditorEmbed("video_to_edit.xxx","z.babin@gmail.com","1qaz2wsx");
+			editorApp.doEditorEmbed("video_to_edit.flv","z.babin@gmail.com","password");
 		}
 	</script>
 	<!-- EDITOR JS END -->

@@ -74,6 +74,11 @@
 				private var filePathToEdit:String = 'oren.flv';
 				
 				[Bindable]
+				public var gatewayUrl:String = 'ytapi/ytgateway.php';
+				[Bindable]
+				public var gatewayUrlUpload:String = 'ytapi/savefileanduploadtoyt.php';
+				
+				[Bindable]
 				public var ytUserEmail:String = '';
 				[Bindable]
 				public var ytUserPassword:String = '';
@@ -93,6 +98,13 @@
 					//register to keydown for chop keyboard support
 					FlexGlobals.topLevelApplication.addEventListener(KeyboardEvent.KEY_DOWN, keyHandler);
 					
+					var gatewayUrltemp:String = FlexGlobals.topLevelApplication.parameters.gatewayurl;
+					if (gatewayUrltemp != '' && gatewayUrltemp != null)
+						gatewayUrl = gatewayUrltemp;
+					var gatewayUrlUploadtemp:String = FlexGlobals.topLevelApplication.parameters.gatewayurlupload;
+					if (gatewayUrlUploadtemp != '' && gatewayUrlUploadtemp != null)
+						gatewayUrlUpload = gatewayUrlUploadtemp;
+					
 					//get parameters from flashvars
 					filePathToEdit = FlexGlobals.topLevelApplication.parameters.editfilepath;
 					var isFlv:Boolean = filePathToEdit.substring(filePathToEdit.length-4,filePathToEdit.length) == '.flv';
@@ -107,7 +119,7 @@
 						(ytUserPassword == null || ytUserPassword == '')) {
 						showFormLoginToYouTube();
 					} else {
-						ytUploader.youTubeLogin(ytUserEmail, ytUserPassword);
+						ytUploader.youTubeLoginGateway(ytUserEmail, ytUserPassword);
 					}
 
 					tt.addEventListener(TimerEvent.TIMER, timertick);
@@ -116,7 +128,7 @@
 				private function formLoginToYouTube(event:MouseEvent):void {
 					errLoginMsg.visible = false;
 					loginprogress.visible = true;
-					ytUploader.youTubeLogin(ytUserEmail, ytUserPassword);
+					ytUploader.youTubeLoginGateway(ytUserEmail, ytUserPassword);
 				}
 				
 				private function showFormLoginToYouTube():void {
@@ -608,7 +620,9 @@
 									 developerKey="AI39si5WWmzMI3O3yPXeLipDKbAzyhGIxLWirhx49EleCJ2dbkDibJArwRTMsjsmYCqcKX8QJMpSRTaErDPvuMieA5qHxTaygQ" 
 									 ytKeywords="{vidKeywords.text}"
 									 ytVideoDescription="{vidDesc.text}"
-									 ytVideoName="{vidName.text}" />
+									 ytVideoName="{vidName.text}"
+									 gatewayUrl="{gatewayUrl}"
+									 gatewayUrlUpload="{gatewayUrlUpload}"/>
 		
 		<mx:StringValidator id="vidNameValidator" required="true" source="{vidName}" property="text"
 				minLength="1" invalid="invalidName(event)"
